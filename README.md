@@ -1,89 +1,127 @@
 # Predição de Diabetes com Dados NHANES 2021-2023
 
-Projeto de Machine Learning para predição de diabetes usando dados populacionais do **NHANES (National Health and Nutrition Examination Survey)** — ciclo 2021-2023, coletados pelo CDC (Centers for Disease Control and Prevention).
+Projeto de Machine Learning para predição de diabetes utilizando dados populacionais do **NHANES (2021-2023)**.
 
-## Objetivo
+---
 
-Classificar indivíduos adultos como **diabéticos ou não diabéticos** a partir de variáveis demográficas, antropométricas, laboratoriais e de estilo de vida, sem utilizar diretamente os critérios diagnósticos clínicos como features.
+## 🔗 Link do Repositório
 
-## Dados
+https://github.com/RenanAmaral/FIAP-9IADT-diabetes-prediction
 
-Os dados são públicos e disponíveis em: https://wwwn.cdc.gov/nchs/nhanes/continuousnhanes/default.aspx?Cycle=2021-2023
+---
 
-| Dataset | Arquivo | Conteúdo |
-|---|---|---|
-| Demográfico | `DEMO_L.xpt` | Idade, sexo, raça, escolaridade, renda |
-| Antropométrico | `BMX_L.xpt` | IMC, cintura, peso, altura, quadril, braço |
-| Pressão arterial | `BPXO_L.xpt` | 3 medições de pressão sistólica e diastólica |
-| Diabetes (questionário) | `DIQ_L.xpt` | Diagnóstico médico de diabetes |
-| Hemoglobina glicada | `GHB_L.xpt` | HbA1c (%) |
-| Glicemia de jejum | `GLU_L.xpt` | Glicose plasmática (mg/dL) |
-| Colesterol | `TCHOL_L.xpt` | Colesterol total |
-| Condições médicas | `MCQ_L.xpt` | Artrite, AVC, infarto, doenças cardíacas |
-| Atividade física | `PAQ_L.xpt` | Minutos de atividade física/sedentarismo |
-| Tabagismo | `SMQ_L.xpt` | Histórico e status de fumante |
+## 👥 Autores
 
-## Variável Target
+- Renan Ribeiro do Amaral — RM: 370618
+- Marcos Tadeu Carmona — RM: 370618  
 
-A variável `DIABETES` é criada combinando **3 critérios diagnósticos da ADA (American Diabetes Association)**:
+---
 
-- **Critério A:** Diagnóstico médico reportado (`DIQ010 == 1`)
-- **Critério B:** HbA1c ≥ 6,5% (`LBXGH >= 6.5`)
-- **Critério C:** Glicemia de jejum ≥ 126 mg/dL (`LBXGLU >= 126`)
+## 🎯 Objetivo
 
-As colunas dos critérios são removidas antes do treinamento para evitar *data leakage*.
+Desenvolver um modelo de Machine Learning capaz de classificar indivíduos adultos como **diabéticos ou não diabéticos**, a partir de dados estruturados, sem utilizar diretamente critérios diagnósticos como features.
 
-## Pipeline do Notebook
+---
 
-O notebook `src/modelo.ipynb` executa as seguintes etapas:
+## 📊 Fonte dos Dados
 
-1. **Carregamento e JOIN** dos 10 datasets via `SEQN`
-2. **Criação do target** com os 3 critérios ADA + filtro adultos ≥ 18 anos
-3. **Limpeza** de códigos especiais NHANES (recusa/não sabe → `NaN`)
-4. **Análise de missings** por coluna
-5. **Feature engineering**: média das pressões, preenchimento do SMQ040
-6. **Matriz de correlação** com nomes legíveis em português
-7. **Pré-processamento**: imputação (mediana/moda) + StandardScaler via Pipeline
-8. **Split estratificado** 80/20
-9. **KNN** — Curva de Validação do K (cross-val 5-fold) + treinamento com K ótimo
-10. **SVM Linear** — LinearSVC + CalibratedClassifierCV
-11. **Logistic Regression** — com `class_weight='balanced'`
-12. **Random Forest** — 200 estimadores com `class_weight='balanced'`
-13. **Avaliação comparativa** — Classification Report + AUC-ROC
+NHANES (CDC):  
+https://wwwn.cdc.gov/nchs/nhanes/continuousnhanes/default.aspx?Cycle=2021-2023
 
-## Resultados (base de teste)
+---
 
-| Modelo | AUC-ROC | Recall (Diabético) |
-|---|---|---|
-| Logistic Regression | ~0.80 | ~73% |
-| Random Forest | ~0.82 | ~10% |
-| SVM Linear | — | — |
-| KNN | ~0.74 | ~6% |
+## 🧠 Discussão da Análise Exploratória
 
-> O **Recall** é a métrica prioritária neste contexto clínico: é pior deixar de identificar um diabético (falso negativo) do que classificar erroneamente um não-diabético (falso positivo).
+A análise exploratória evidenciou:
 
-## Estrutura do Projeto
+- Presença de **valores ausentes** em diferentes variáveis  
+- **Desbalanceamento entre classes**, com predominância de não diabéticos  
+- **Correlação entre variáveis antropométricas**, como IMC, peso e circunferência  
+- Distribuições assimétricas em variáveis laboratoriais  
 
-```
-FIAP-9IADT-diabetes-prediction/
-├── datasets/           # Arquivos .xpt do NHANES (não versionados)
-├── src/
-│   └── modelo.ipynb    # Notebook principal
-├── requirements.txt
-└── README.md
-```
+Esses fatores impactam diretamente o desempenho dos modelos e orientaram as decisões de pré-processamento.
 
-## Configuração do Ambiente
+---
+
+## ⚙️ Estratégias de Pré-processamento
+
+Foram aplicadas as seguintes técnicas:
+
+- Tratamento de valores ausentes com imputação  
+- Padronização das variáveis numéricas (**StandardScaler**)  
+- Criação da variável target com base em critérios clínicos  
+- Remoção de colunas que causariam **data leakage**  
+- Uso de **Pipeline** para garantir consistência no fluxo  
+- Separação treino/teste com **estratificação**  
+
+---
+
+## 🤖 Modelos Utilizados e Justificativa
+
+Foram avaliados quatro modelos:
+
+- **Logistic Regression** → baseline interpretável e robusto  
+- **Random Forest** → captura relações não lineares  
+- **SVM Linear** → bom desempenho em espaços de alta dimensão  
+- **KNN** → modelo baseado em distância para comparação  
+
+A escolha buscou comparar abordagens lineares e não lineares em dados tabulares.
+
+---
+
+## 📈 Resultados Obtidos
+
+### Métricas avaliadas:
+- Accuracy  
+- Recall  
+- F1-score  
+- AUC-ROC  
+
+### Principais resultados:
+
+- **Logistic Regression**
+  - Melhor recall (~0.73)
+  - Melhor equilíbrio geral (F1)
+
+- **Random Forest**
+  - Melhor AUC (~0.82)
+  - Baixo recall (~0.10)
+
+- **SVM**
+  - Alta precisão
+  - Recall limitado
+
+- **KNN**
+  - Pior desempenho geral
+
+---
+
+## 📊 Análises e Interpretação dos Resultados
+
+- A **Logistic Regression** foi o modelo mais adequado para o problema, devido à sua maior capacidade de identificar a classe positiva  
+- O **Random Forest**, apesar da alta AUC, mostrou-se conservador no threshold padrão  
+- O **desbalanceamento entre classes** impactou fortemente os modelos, especialmente o KNN  
+- A escolha da métrica **recall** foi fundamental para avaliar corretamente o problema  
+
+Gráficos gerados:
+- Curva ROC  
+- Matriz de confusão  
+- Feature importance  
+- Validação cruzada  
+
+---
+
+## ⚙️ Execução do Projeto
+
+🐳 Execução com Docker
+docker build -t fiap-diabetes-prediction .
+docker run -p 8888:8888 fiap-diabetes-prediction
+
+### 🔹 Execução Local
 
 ```bash
 python -m venv venv
-venv\Scripts\activate        # Windows
+venv\Scripts\activate
 pip install -r requirements.txt
-```
+jupyter notebook
 
-## Tecnologias
-
-- Python 3.12
-- pandas, numpy
-- scikit-learn (Pipeline, ColumnTransformer, KNN, SVM, LR, RF)
-- matplotlib, seaborn
