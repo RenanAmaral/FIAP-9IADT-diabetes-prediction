@@ -1,164 +1,232 @@
 # Avaliação Comparativa dos Modelos
 
-## Contexto
+## 1. Contexto
 
-Foram treinados 4 modelos de classificação binária (diabético vs. não diabético) usando dados do NHANES 2021-2023, com **8.150 adultos** (84% não diabéticos, 16% diabéticos). A avaliação foi realizada sobre o conjunto de teste (**1.630 amostras**, split estratificado 80/20).
+Foram treinados quatro modelos de classificação binária para predição de diabetes (**diabético vs. não diabético**) usando dados do **NHANES 2021-2023**.
 
-O desbalanceamento da classe positiva (16%) é um fator importante que influencia diretamente o desempenho dos modelos.
+O problema apresenta **desbalanceamento de classes**, com predominância da classe negativa, o que torna inadequado avaliar desempenho apenas por acurácia. Em contexto clínico, a principal preocupação é evitar **falsos negativos**, ou seja, pacientes diabéticos não identificados pelo sistema.
 
----
-
-## Explicação das Métricas
-
-### Accuracy (Acurácia)
-
-Percentual de previsões corretas sobre o total:
-
-$$Accuracy = \frac{VP + VN}{VP + VN + FP + FN}$$
-
-**Limitação**: Em datasets desbalanceados, um modelo que prevê "Não Diabético" para todos atinge ~84% de acurácia sem aprender nada. Por isso, não deve ser a métrica principal.
-
-### Precision (Precisão)
-
-Dos que o modelo classificou como diabéticos, quantos realmente são:
-
-$$Precision = \frac{VP}{VP + FP}$$
-
-**Interpretação clínica**: Precision alta = poucos alarmes falsos. Se um paciente for classificado como diabético, há alta confiança de que realmente é.
-
-### Recall (Sensibilidade / Revocação)
-
-Dos diabéticos reais, quantos o modelo conseguiu identificar:
-
-$$Recall = \frac{VP}{VP + FN}$$
-
-**Interpretação clínica**: Recall alta = poucos diabéticos passam despercebidos. **Métrica mais crítica neste contexto** — deixar de diagnosticar diabetes (falso negativo) tem consequências graves para a saúde do paciente.
-
-### F1-Score
-
-Média harmônica entre Precision e Recall. Útil quando ambas são importantes:
-
-$$F1 = 2 \times \frac{Precision \times Recall}{Precision + Recall}$$
-
-**Interpretação**: Penaliza desbalanceamento entre precision e recall. Um modelo com precision=0.90 e recall=0.02 terá F1 muito baixo (~0.04), expondo que ele quase não detecta a classe positiva.
-
-### AUC-ROC (Area Under the ROC Curve)
-
-Área sob a curva ROC, que plota a taxa de verdadeiros positivos vs. falsos positivos em diferentes limiares de decisão:
-
-- **1.0** = modelo perfeito
-- **0.5** = equivalente a jogar uma moeda
-- **< 0.5** = pior que aleatório
-
-**Vantagem**: Avalia a capacidade discriminativa do modelo independentemente do threshold de decisão (0.5 por padrão). É a métrica mais robusta para comparar modelos em datasets desbalanceados.
+O objetivo deste projeto não é substituir o diagnóstico médico, mas atuar como ferramenta de **triagem** e **apoio à decisão clínica**.
 
 ---
 
-## Resultados
+## 2. Métricas Utilizadas
+
+### Accuracy
+
+Representa a proporção total de previsões corretas:
+
+\[
+Accuracy = \frac{VP + VN}{VP + VN + FP + FN}
+\]
+
+Apesar de útil, essa métrica pode ser enganosa em datasets desbalanceados, pois um modelo pode obter alta acurácia apenas prevendo a classe majoritária.
+
+### Precision
+
+Indica, dentre os indivíduos classificados como diabéticos, quantos realmente eram diabéticos:
+
+\[
+Precision = \frac{VP}{VP + FP}
+\]
+
+Clinicamente, uma precision mais alta significa menos alarmes falsos.
+
+### Recall
+
+Indica, dentre os diabéticos reais, quantos foram corretamente identificados:
+
+\[
+Recall = \frac{VP}{VP + FN}
+\]
+
+Essa é a métrica mais importante neste projeto. Em triagem clínica, é mais grave não identificar um paciente com diabetes do que gerar um falso positivo.
+
+### F1-score
+
+É a média harmônica entre precision e recall:
+
+\[
+F1 = 2 \times \frac{Precision \times Recall}{Precision + Recall}
+\]
+
+Essa métrica é útil quando há necessidade de equilíbrio entre sensibilidade e precisão.
+
+### AUC-ROC
+
+A AUC-ROC mede a capacidade do modelo de separar as duas classes em diferentes thresholds.
+
+- **1.0** = separação perfeita
+- **0.5** = equivalente ao acaso
+
+É uma métrica robusta para comparação entre classificadores, principalmente em cenários de desbalanceamento.
+
+---
+
+## 3. Modelos Avaliados
+
+Foram comparados quatro algoritmos:
+
+- Logistic Regression
+- Random Forest
+- SVM Linear
+- KNN
+
+Todos foram avaliados com:
+- conjunto de teste
+- validação cruzada estratificada
+- análise das métricas de classificação
+- comparação crítica com foco em contexto clínico
+
+---
+
+## 4. Resultado Comparativo
 
 | Modelo | Accuracy | Precision (Diab.) | Recall (Diab.) | F1 (Diab.) | AUC-ROC |
-|---|---|---|---|---|---|
-| **Logistic Regression** | 70,49% | 0,32 | **0,73** | **0,44** | 0,8001 |
-| **Random Forest** | **83,93%** | **0,49** | 0,10 | 0,16 | **0,8216** |
-| **SVM Linear** | 84,54% | 0,56 | 0,16 | 0,25 | 0,7997 |
-| **KNN (k=29)** | 83,87% | 0,42 | 0,02 | 0,04 | 0,7598 |
+|---|---:|---:|---:|---:|---:|
+| Logistic Regression | 70,49% | 0,32 | **0,73** | **0,44** | 0,8001 |
+| Random Forest | **83,93%** | 0,49 | 0,10 | 0,16 | **0,8216** |
+| SVM Linear | 84,54% | **0,56** | 0,16 | 0,25 | 0,7997 |
+| KNN | 83,87% | 0,42 | 0,02 | 0,04 | 0,7598 |
 
 ---
 
-## Análise por Modelo
+## 5. Análise Crítica por Modelo
 
-### Logistic Regression — Melhor modelo para uso clínico
+### Logistic Regression
 
-- **Recall de 73%**: identifica quase 3 de cada 4 diabéticos reais — muito superior aos demais
-- **AUC-ROC de 0,80**: boa capacidade discriminativa
-- **Accuracy de 70%**: a mais baixa, porém isso é um reflexo direto da estratégia `class_weight='balanced'`, que sacrifica acurácia global para aumentar a detecção da classe minoritária
-- **Precision de 32%**: a cada 3 alertas de diabetes, 1 é correto — o trade-off pela alta sensibilidade
-- **F1 de 0,44**: o melhor equilíbrio entre precision e recall entre todos os modelos
+Foi o modelo mais adequado para o problema proposto.
 
-**Por que se destaca**: Em contexto clínico, é preferível ter falsos positivos (que serão descartados com exames adicionais) a ter falsos negativos (diabéticos não diagnosticados que podem sofrer complicações graves).
+Pontos fortes:
+- melhor recall entre todos os modelos
+- melhor F1-score
+- AUC-ROC competitiva
+- comportamento mais alinhado com triagem clínica
 
-### Random Forest — Melhor AUC-ROC, mas recall insuficiente
+Ponto de atenção:
+- acurácia inferior aos demais modelos
 
-- **AUC-ROC de 0,82**: a mais alta entre todos, indicando boa capacidade de separação probabilística
-- **Recall de apenas 10%**: apesar do `class_weight='balanced'`, o modelo ainda é conservador — 90% dos diabéticos passam despercebidos
-- **Precision de 49%**: quando alerta, acerta quase metade das vezes
-- **Paradoxo AUC alta + recall baixo**: o modelo tem boa separação probabilística (as probabilidades discriminam bem), mas o threshold padrão de 0,5 é muito alto. Ajustar o threshold poderia melhorar significativamente o recall
+Interpretação:
+A menor acurácia é consequência direta da priorização da classe minoritária, especialmente com o uso de `class_weight='balanced'`. Em um problema clínico, essa troca é aceitável e desejável, porque reduz falsos negativos.
 
-### SVM Linear — Desempenho intermediário
+### Random Forest
 
-- **Recall de 16%**: melhor que RF e KNN, mas muito inferior ao LR
-- **AUC-ROC de 0,80**: praticamente igual à Logistic Regression
-- **Precision de 56%**: a mais alta entre todos — quando alerta, geralmente está certo
-- **Limitação**: modelo linear com margem máxima que, neste dataset, não encontrou uma separação eficiente para a classe minoritária mesmo com `class_weight='balanced'`
+Apresentou a melhor AUC-ROC, o que indica boa capacidade de discriminar as classes.
 
-### KNN (k=29) — Pior desempenho geral
+Pontos fortes:
+- maior AUC-ROC
+- bom potencial para interpretação por feature importance
 
-- **Recall de 2%**: praticamente não detecta diabéticos (identifica apenas ~5 dos ~261 do teste)
-- **AUC-ROC de 0,76**: a mais baixa, indicando capacidade discriminativa limitada
-- **F1 de 0,04**: o pior entre todos os modelos
-- **Por que falhou**: KNN é sensível à "maldição da dimensionalidade" — com 25 features, a noção de "distância" perde significado. Além disso, o desbalanceamento 84/16 faz a maioria dos vizinhos serem não diabéticos, dominando a votação mesmo com `weights='distance'`
+Pontos fracos:
+- recall muito baixo para uso clínico direto
+- grande parte dos diabéticos reais não foi detectada no threshold padrão
+
+Interpretação:
+O modelo parece separar bem as probabilidades, mas o threshold padrão de decisão é conservador demais. Isso sugere potencial de melhoria com ajuste de limiar.
+
+### SVM Linear
+
+Apresentou desempenho intermediário.
+
+Pontos fortes:
+- maior precision
+- AUC próxima à da Logistic Regression
+
+Pontos fracos:
+- recall ainda insuficiente para triagem clínica
+
+Interpretação:
+Embora seja mais conservador e erre menos nos positivos previstos, deixa passar muitos diabéticos reais.
+
+### KNN
+
+Foi o modelo com pior desempenho geral.
+
+Pontos fracos:
+- recall praticamente nulo
+- pior F1-score
+- pior AUC-ROC
+
+Interpretação:
+O KNN mostrou baixa capacidade de generalização neste problema, provavelmente devido ao desbalanceamento da classe positiva e à alta dimensionalidade das features.
 
 ---
 
-## Ranking Final
+## 6. Ranking Final
 
 | Posição | Modelo | Justificativa |
 |---|---|---|
-| 1º | **Logistic Regression** | Melhor recall (73%), melhor F1, AUC competitiva. Ideal para triagem clínica |
-| 2º | **Random Forest** | Melhor AUC (0,82), potencial de melhoria com ajuste de threshold |
-| 3º | **SVM Linear** | Melhor precision, mas recall baixo limita utilidade clínica |
-| 4º | **KNN (k=29)** | Recall quase nulo, inadequado para este problema |
+| 1º | Logistic Regression | Melhor recall, melhor F1 e maior utilidade para triagem |
+| 2º | Random Forest | Melhor AUC-ROC e bom potencial após ajuste de threshold |
+| 3º | SVM Linear | Boa precisão, mas recall limitado |
+| 4º | KNN | Desempenho insuficiente para a classe positiva |
 
 ---
 
-## Oportunidades de Melhoria
+## 7. Interpretação do Modelo
 
-### 1. Ajuste de Threshold (Random Forest)
+Como etapa de interpretabilidade, foi utilizada **feature importance** no modelo Random Forest para identificar as variáveis mais relevantes para a classificação.
 
-O Random Forest tem a melhor AUC-ROC (0,82) mas recall de apenas 10%. Isso significa que as probabilidades previstas são discriminativas, mas o limiar padrão de 0,5 é conservador demais. Reduzir o threshold para ~0,3 pode elevar o recall significativamente, com trade-off controlado na precision.
+Essa análise é importante porque:
+- aumenta a transparência do modelo
+- ajuda a verificar coerência clínica
+- permite discutir se o modelo está aprendendo padrões plausíveis
 
-```python
-# Em vez de predict() com threshold fixo de 0.5:
-threshold = 0.30
-y_pred_rf_ajustado = (y_prob_rf >= threshold).astype(int)
-```
+Esse ponto é essencial em aplicações médicas, em que modelos puramente “caixa-preta” tendem a ser menos aceitos sem explicação adequada.
 
-### 2. Técnicas de Balanceamento (SMOTE)
+---
 
-O `class_weight='balanced'` ajusta os pesos da loss, mas não altera a distribuição dos dados. Técnicas de oversampling como **SMOTE** (Synthetic Minority Oversampling Technique) criam exemplos sintéticos da classe minoritária, potencialmente melhorando o aprendizado dos modelos baseados em árvore e distância.
+## 8. Aderência ao Contexto Clínico
 
-```python
-from imblearn.over_sampling import SMOTE
-from imblearn.pipeline import Pipeline as ImbPipeline
+O modelo escolhido para melhor desempenho prático foi a **Logistic Regression**, mesmo não tendo a maior acurácia.
 
-smote = SMOTE(random_state=42)
-# Integrar ao pipeline via imblearn
-```
+Justificativa:
+- em triagem clínica, o custo de um falso negativo é mais alto que o de um falso positivo
+- pacientes classificados incorretamente como diabéticos ainda podem ser avaliados posteriormente
+- pacientes diabéticos não identificados podem permanecer sem tratamento ou acompanhamento
 
-### 3. Feature Selection / Redução de Dimensionalidade
+Portanto, o recall foi priorizado como principal critério de decisão.
 
-O KNN sofre com a maldição da dimensionalidade (25 features). Opções:
-- **PCA**: reduzir para 10-15 componentes antes do KNN
-- **Feature importance do Random Forest**: selecionar apenas as top 10-15 features mais relevantes
-- **Remoção de features multicolineares**: cintura, peso, quadril e IMC são altamente correlacionados — manter apenas 1-2 dessas medidas pode ajudar
+---
 
-### 4. Modelos Ensemble Avançados
+## 9. Limitações do Projeto
 
-- **XGBoost / LightGBM**: gradient boosting geralmente supera Random Forest em dados tabulares, com melhor tratamento nativo de desbalanceamento via `scale_pos_weight`
-- **Stacking**: combinar as previsões do LR (bom recall) com RF (bom AUC) em um meta-learner
+- Dados observacionais e populacionais
+- Desbalanceamento entre as classes
+- Avaliação feita sobre uma única base
+- Ausência de validação externa
 
-### 5. Otimização de Hiperparâmetros (GridSearchCV / RandomizedSearchCV)
+---
 
-Os modelos foram treinados com hiperparâmetros padrão ou mínimos. Um grid search otimizando para `recall` ou `f1` poderia encontrar combinações melhores:
+## 10. Melhorias Futuras
 
-- **Random Forest**: `max_depth`, `min_samples_leaf`, `n_estimators`, `max_features`
-- **Logistic Regression**: `C` (regularização), `penalty` (l1/l2)
-- **SVM Linear**: `C`
+1. Ajuste de Threshold de Decisão (Random Forest):
+Apesar de apresentar a maior AUC-ROC (~0,82), o Random Forest possui recall baixo (~10%), indicando que o threshold padrão de 0,5 é conservador; reduzir o limiar (ex.: ~0,3) pode aumentar significativamente o recall com impacto controlado na precision.
+    
+    ```python
+        threshold = 0.30
+        y_pred_rf_ajustado = (y_prob_rf >= threshold).astype(int)
+    ```
+2. Técnicas de Balanceamento (SMOTE):
+O uso de class_weight='balanced' ajusta os pesos da função de perda, mas não altera a distribuição dos dados; técnicas como SMOTE podem gerar amostras sintéticas da classe minoritária, melhorando o aprendizado dos modelos.
+    ```python
+        from imblearn.over_sampling import SMOTE
+        smote = SMOTE(random_state=42)
+    ```
+3. Seleção de Variáveis e Redução de Dimensionalidade: 
+A alta dimensionalidade impacta modelos como KNN; estratégias como PCA, seleção via feature importance e remoção de variáveis altamente correlacionadas (ex.: IMC, peso, cintura) podem melhorar o desempenho.
+4. Modelos Ensemble Avançados:
+Modelos como XGBoost e LightGBM tendem a apresentar melhor desempenho em dados tabulares e lidam melhor com desbalanceamento; técnicas de stacking também podem combinar o alto recall da Logistic Regression com a alta AUC do Random Forest.
+5. Otimização de Hiperparâmetros:
+Os modelos foram utilizados com configurações padrão; a aplicação de GridSearchCV ou RandomizedSearchCV, com foco em recall ou F1-score, pode resultar em melhorias relevantes de desempenho.
+6. Curva Precision-Recall:
+A inclusão da curva Precision-Recall complementa a análise, sendo mais adequada para datasets desbalanceados, pois penaliza mais os erros na classe minoritária.
+---
 
-### 6. Curva Precision-Recall
+## 11. Conclusão
 
-Complementar a análise com a **curva Precision-Recall** (PR curve), que é mais informativa que a ROC em datasets desbalanceados. A área sob a curva PR (AP — Average Precision) penaliza mais os modelos que falham na classe minoritária.
+O projeto demonstrou a viabilidade da aplicação de técnicas de Machine Learning na predição de diabetes a partir de dados médicos estruturados.
 
-### 7. Validação Cruzada na Avaliação Final
+Entre os modelos avaliados, a Logistic Regression apresentou o melhor desempenho para o problema proposto, destacando-se pelo maior equilíbrio entre as métricas analisadas, especialmente pela alta sensibilidade na detecção da classe positiva.
 
-A avaliação atual usa um único split fixo de teste. Adotar **cross-validation estratificado de 5 ou 10 folds** na avaliação final daria uma estimativa mais robusta do desempenho, com intervalos de confiança para cada métrica.
+Os resultados obtidos evidenciam a importância da escolha adequada das métricas em cenários com desbalanceamento entre classes, bem como o impacto direto dessa escolha na interpretação e utilização dos modelos.
